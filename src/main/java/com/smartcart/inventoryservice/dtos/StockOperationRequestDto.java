@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DeactivateInventoryRequest {
-    private Long variantId;
+public class StockOperationRequestDto {
+   private Long variantId;
+   private Integer quantity;
 }

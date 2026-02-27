@@ -1,13 +1,13 @@
 package com.smartcart.inventoryservice.services;
 
 import com.smartcart.inventoryservice.dtos.*;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 public interface InventoryService {
     InventoryResponseDto createInventory(CreateInventoryDto createInventoryDto);
     StockCheckDto checkStock(Long variantId);
-    ReserveStockResponseDto reserveStock(ReserveStockRequestDto reserveStockRequestDto);
-    InventoryResponseDto releaseStock(ReleaseStockRequestDto releaseStockRequestDto);
-    InventoryResponseDto confirmReservation(ConfirmReservationDto dto);
+    InventoryResponseDto reserveStock(StockOperationRequestDto stockOperationRequestDto);
+    InventoryResponseDto releaseStock(StockOperationRequestDto stockOperationRequestDto);
+    InventoryResponseDto confirmReservation(StockOperationRequestDto dto);
+    InventoryResponseDto Restock(Long variantId, StockOperationRequestDto dto);
+    InventoryResponseDto Deactivate(Long variantId);
 }

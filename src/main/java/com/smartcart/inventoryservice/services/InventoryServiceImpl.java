@@ -7,6 +7,7 @@ import com.smartcart.inventoryservice.mappers.InventoryMapper;
 import com.smartcart.inventoryservice.models.Inventory;
 import com.smartcart.inventoryservice.repositories.InventoryRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ public class InventoryServiceImpl implements InventoryService{
     }
 
 
+    @Transactional
     @Override
     public InventoryResponseDto createInventory(CreateInventoryDto dto) {
         Optional<Inventory> existing=inventoryRepository.findByVariantId(dto.getVariantId());
@@ -45,46 +47,81 @@ public class InventoryServiceImpl implements InventoryService{
         return inventoryMapper.toStockDto(inventory);
     }
 
+    @Transactional
     @Override
-    public ReserveStockResponseDto reserveStock(ReserveStockRequestDto reserveStockRequestDto) {
-        Optional<Inventory>  existing=inventoryRepository.findByVariantId(reserveStockRequestDto.getVariantId());
+    public InventoryResponseDto reserveStock(StockOperationRequestDto stockOperationRequestDto) {
+        Optional<Inventory>  existing=inventoryRepository.findByVariantId(stockOperationRequestDto.getVariantId());
         if(existing.isEmpty()){
             throw new InventoryNotFoundException("Inventory not found");
         }
         Inventory inventory=existing.get();
+        if(!inventory.isActive()){
+            throw new RuntimeException("Inactive inventory");
+        }
         Integer stock=inventory.getAvailableStock();
-        Integer quantity=reserveStockRequestDto.getQuantity();
+        Integer quantity=stockOperationRequestDto.getQuantity();
         if(stock<quantity){
             throw new NotEnoughStockException("Not enough stock");
         }
         inventory.setAvailableStock(stock-quantity);
         inventory.setReservedStock(inventory.getReservedStock()+ quantity);
         inventoryRepository.save(inventory);
-        return inventoryMapper.toReserveDto(inventory);
+        return inventoryMapper.toResponse(inventory);
     }
 
+    @Transactional
     @Override
-    public InventoryResponseDto releaseStock(ReleaseStockRequestDto releaseStockRequestDto) {
-        Optional<Inventory>  existing=inventoryRepository.findByVariantId(releaseStockRequestDto.getVariantId());
+    public InventoryResponseDto releaseStock(StockOperationRequestDto stockOperationRequestDto) {
+        Optional<Inventory>  existing=inventoryRepository.findByVariantId(stockOperationRequestDto.getVariantId());
         if(existing.isEmpty()){
             throw new InventoryNotFoundException("Inventory not found");
         }
         Inventory inventory=existing.get();
-        Integer quantity=releaseStockRequestDto.getQuantity();
+        Integer quantity=stockOperationRequestDto.getQuantity();
+        if(inventory.getReservedStock()<quantity){
+            throw new IllegalStateException("Invalid release request");
+        }
         inventory.setReservedStock(inventory.getReservedStock()-quantity);
         inventory.setAvailableStock(inventory.getAvailableStock()+quantity);
-        inventory=inventoryRepository.save(inventory);
-        return  inventoryMapper.toResponse(inventory);
+        return  inventoryMapper.toResponse(inventoryRepository.save(inventory));
     }
 
+    @Transactional
     @Override
-    public InventoryResponseDto confirmReservation(ConfirmReservationDto dto) {
+    public InventoryResponseDto confirmReservation(StockOperationRequestDto dto) {
         Optional<Inventory>  existing=inventoryRepository.findByVariantId(dto.getVariantId());
         if(existing.isEmpty()){
             throw new InventoryNotFoundException("Inventory not found");
         }
         Inventory inventory=existing.get();
+        if(inventory.getReservedStock()< dto.getQuantity()){
+            throw new IllegalStateException("Invalid confirm");
+        }
         inventory.setReservedStock(inventory.getReservedStock()-dto.getQuantity());
         return inventoryMapper.toResponse(inventoryRepository.save(inventory));
     }
+
+    @Override
+    public InventoryResponseDto Restock(Long variantId, StockOperationRequestDto dto) {
+        Optional<Inventory>  existing=inventoryRepository.findByVariantId(variantId);
+        if(existing.isEmpty()){
+            throw new InventoryNotFoundException("Inventory not found");
+        }
+        Inventory inventory=existing.get();
+        inventory.setAvailableStock(inventory.getAvailableStock()+dto.getQuantity());
+        return inventoryMapper.toResponse(inventoryRepository.save(inventory));
+    }
+
+    @Override
+    public InventoryResponseDto Deactivate(Long variantId) {
+        Optional<Inventory>  existing=inventoryRepository.findByVariantId(variantId);
+        if(existing.isEmpty()){
+            throw new InventoryNotFoundException("Inventory not found");
+        }
+        Inventory inventory=existing.get();
+        inventory.setActive(false);
+        return inventoryMapper.toResponse(inventoryRepository.save(inventory));
+    }
+
+
 }

@@ -2,7 +2,6 @@ package com.smartcart.inventoryservice.mappers;
 
 import com.smartcart.inventoryservice.dtos.CreateInventoryDto;
 import com.smartcart.inventoryservice.dtos.InventoryResponseDto;
-import com.smartcart.inventoryservice.dtos.ReserveStockResponseDto;
 import com.smartcart.inventoryservice.dtos.StockCheckDto;
 import com.smartcart.inventoryservice.models.Inventory;
 import org.springframework.stereotype.Component;

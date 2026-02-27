@@ -8,11 +8,9 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Entity(name = "inventroy")
-public class Inventory {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Entity
+@Table(name = "inventory")
+public class Inventory extends  BaseEntity {
     @Column(name = "variant_id", nullable = false, unique = true)
     private Long variantId;
     @Column(name = "sku", nullable = false, unique = true)
@@ -25,7 +23,5 @@ public class Inventory {
     private boolean active;
     @Version
     private Integer version;
-    
-    private LocalDateTime  createdAt;
-    private LocalDateTime updatedAt;
+
 }
