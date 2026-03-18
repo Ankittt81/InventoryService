@@ -6,6 +6,7 @@ import com.smartcart.inventoryservice.exceptions.NotEnoughStockException;
 import com.smartcart.inventoryservice.mappers.InventoryMapper;
 import com.smartcart.inventoryservice.models.Inventory;
 import com.smartcart.inventoryservice.repositories.InventoryRepository;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +21,10 @@ public class InventoryServiceImpl implements InventoryService{
         this.inventoryRepository = inventoryRepository;
         this.inventoryMapper = inventoryMapper;
     }
-
-
+@KafkaListener(topics = "Variant-Created", groupId = "inventory-group")
+public void consumerVariantCreated(CreateInventoryDto dto){
+        createInventory(dto);
+}
     @Transactional
     @Override
     public InventoryResponseDto createInventory(CreateInventoryDto dto) {
