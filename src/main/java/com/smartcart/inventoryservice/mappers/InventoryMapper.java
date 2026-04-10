@@ -26,6 +26,7 @@ public class InventoryMapper {
         inventoryResponseDto.setVariantId(inventory.getVariantId());
         inventoryResponseDto.setSku(inventory.getSku());
         inventoryResponseDto.setAvailableStock(inventory.getAvailableStock());
+        inventoryResponseDto.setReservedStock(inventory.getReservedStock());
         inventoryResponseDto.setActive(inventory.isActive());
         return inventoryResponseDto;
     }
@@ -38,11 +39,11 @@ public class InventoryMapper {
         return stockCheckDto;
     }
 
-    public ReserveStockResponseDto toReserveDto(Inventory inventory) {
-        ReserveStockResponseDto reserveStockResponseDto = new ReserveStockResponseDto();
-        reserveStockResponseDto.setVariantId(inventory.getVariantId());
-        reserveStockResponseDto.setReservedQuantity(inventory.getReservedStock());
-        reserveStockResponseDto.setRemainingStock(inventory.getAvailableStock());
-        return reserveStockResponseDto;
-    }
+//    public ReserveStockResponseDto toReserveDto(Inventory inventory) {
+//        ReserveStockResponseDto reserveStockResponseDto = new ReserveStockResponseDto();
+//        reserveStockResponseDto.setVariantId(inventory.getVariantId());
+//        reserveStockResponseDto.setReservedQuantity(inventory.getReservedStock());
+//        reserveStockResponseDto.setRemainingStock(inventory.getAvailableStock());
+//        return reserveStockResponseDto;
+//    }
 }

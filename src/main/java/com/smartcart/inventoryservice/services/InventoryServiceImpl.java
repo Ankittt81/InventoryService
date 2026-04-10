@@ -36,23 +36,25 @@ public void consumerVariantCreated(CreateInventoryDto dto){
 
         Inventory inventory=inventoryMapper.toEntity(dto);
         inventory=inventoryRepository.save(inventory);
+        System.out.println("Create Inventory Successfully");
         return inventoryMapper.toResponse(inventory);
     }
 
     @Override
-    public StockCheckDto checkStock(Long variantId) {
+    public InventoryResponseDto checkStock(Long variantId) {
         Optional<Inventory> existing=inventoryRepository.findByVariantId(variantId);
         if(existing.isEmpty()){
             throw new InventoryNotFoundException("Inventory not found");
         }
 
         Inventory inventory=existing.get();
-        return inventoryMapper.toStockDto(inventory);
+        System.out.println("Check Stock Successfully");
+        return inventoryMapper.toResponse(inventory);
     }
 
     @Transactional
     @Override
-    public InventoryResponseDto reserveStock(StockOperationRequestDto stockOperationRequestDto) {
+    public boolean reserveStock(StockOperationRequestDto stockOperationRequestDto) {
         Optional<Inventory>  existing=inventoryRepository.findByVariantId(stockOperationRequestDto.getVariantId());
         if(existing.isEmpty()){
             throw new InventoryNotFoundException("Inventory not found");
@@ -69,7 +71,7 @@ public void consumerVariantCreated(CreateInventoryDto dto){
         inventory.setAvailableStock(stock-quantity);
         inventory.setReservedStock(inventory.getReservedStock()+ quantity);
         inventoryRepository.save(inventory);
-        return inventoryMapper.toResponse(inventory);
+        return true;
     }
 
     @Transactional

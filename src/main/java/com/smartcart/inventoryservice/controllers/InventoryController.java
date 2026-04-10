@@ -22,13 +22,13 @@ public class InventoryController {
     }
 
     @GetMapping("/{variantId}")
-    public ResponseEntity<StockCheckDto>  checkStock(@PathVariable Long variantId) {
+    public ResponseEntity<InventoryResponseDto>  checkStock(@PathVariable Long variantId) {
         return ResponseEntity.ok(inventoryService.checkStock(variantId));
     }
 
     @PostMapping("/reserve")
-    public ResponseEntity<InventoryResponseDto> reserveStock(@RequestBody StockOperationRequestDto stockOperationRequestDto) {
-        return ResponseEntity.ok(inventoryService.reserveStock(stockOperationRequestDto));
+    public boolean reserveStock(@RequestBody StockOperationRequestDto stockOperationRequestDto) {
+        return inventoryService.reserveStock(stockOperationRequestDto);
     }
 
     @PostMapping("/release")

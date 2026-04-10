@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String authHeader=request.getHeader("Authorization");
-        if (authHeader==null && !authHeader.startsWith("Bearer ")) {
+        if (authHeader==null || !authHeader.startsWith("Bearer ")) {
             httpServletResponse(response);
             return;
         }
@@ -49,6 +50,9 @@ public class JwtFilter extends OncePerRequestFilter {
                         null,    //credentials like password but due to jwt it is verified so we dont need
                         authorities
                 );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
 
     }
     void httpServletResponse(HttpServletResponse httpServletResponse) throws IOException {
