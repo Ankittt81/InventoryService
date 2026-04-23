@@ -1,6 +1,8 @@
 package com.smartcart.inventoryservice.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartcart.inventoryservice.dtos.*;
+import com.smartcart.inventoryservice.events.InventoryEvent;
 import com.smartcart.inventoryservice.exceptions.InventoryNotFoundException;
 import com.smartcart.inventoryservice.exceptions.NotEnoughStockException;
 import com.smartcart.inventoryservice.mappers.InventoryMapper;
@@ -10,20 +12,30 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+
 import java.util.Optional;
 
 @Service
 public class InventoryServiceImpl implements InventoryService{
     private InventoryRepository inventoryRepository;
     private InventoryMapper  inventoryMapper;
+    private ObjectMapper objectMapper;
 
-    public InventoryServiceImpl(InventoryRepository inventoryRepository, InventoryMapper inventoryMapper) {
+    public InventoryServiceImpl(InventoryRepository inventoryRepository, InventoryMapper inventoryMapper, ObjectMapper objectMapper) {
         this.inventoryRepository = inventoryRepository;
         this.inventoryMapper = inventoryMapper;
+        this.objectMapper = objectMapper;
     }
 @KafkaListener(topics = "Variant-Created", groupId = "inventory-group")
-public void consumerVariantCreated(CreateInventoryDto dto){
-        createInventory(dto);
+public void consumerVariantCreated(String message){
+        try{
+            CreateInventoryDto dto = objectMapper.readValue(message, CreateInventoryDto.class);
+            createInventory(dto);
+        }catch (Exception e){
+            throw new RuntimeException("Message cannot be parsed!");
+        }
+
 }
     @Transactional
     @Override
@@ -71,6 +83,8 @@ public void consumerVariantCreated(CreateInventoryDto dto){
         inventory.setAvailableStock(stock-quantity);
         inventory.setReservedStock(inventory.getReservedStock()+ quantity);
         inventoryRepository.save(inventory);
+        System.out.println("Reserve "+quantity+" of variant "+inventory.getVariantId()+" Stock Successfully");
+        System.out.println("Now! variant "+inventory.getVariantId()+" Inventory have "+inventory.getReservedStock()+" stocks reserved");
         return true;
     }
 
@@ -129,4 +143,22 @@ public void consumerVariantCreated(CreateInventoryDto dto){
     }
 
 
+    @KafkaListener(topics = "inventory-topic", groupId = "inventory-group")
+    public void handleInventory(String message) throws Exception {
+        try{
+            InventoryEvent event = objectMapper.readValue(message, InventoryEvent.class);
+
+            for (InventoryEvent.Item item : event.getItems()) {
+
+                if ("SUCCESS".equals(event.getPaymentStatus())) {
+                    confirmReservation(new StockOperationRequestDto(item.getVariantId(), item.getQuantity()));
+                } else {
+                    releaseStock(new StockOperationRequestDto(item.getVariantId(), item.getQuantity()));
+                }
+            }
+            System.out.println("Inventory updated Successfully for orderId: "+event.getOrderId());
+        }catch (Exception e){
+            throw new Exception("message cannot be parsed!");
+        }
+    }
 }
